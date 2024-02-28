@@ -1,0 +1,32 @@
+[package]
+name = "deep-systems-analysis"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.13"
+bevy-inspector-egui = "0.23.2"
+bevy_egui = "0.25.0"
+egui = "0.26.2"
+
+
+# --Disable Default--
+# android_shared_stdcxx
+# bevy_gilrs
+# webgl2
+
+# --Unsure Default--
+# bevy_gizmos
+# bevy_gilrs
+# bevy_winit
+# hdr
+# ktx2
+# vorbis
+# x11
+# zstd
+
+# --Activate Optional--
+# dynamic_linking
+# file_watcher
