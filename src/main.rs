@@ -48,9 +48,6 @@ use bevy::prelude::*;
 // DSA dependencies
 use toolbar_menu::ToolbarMenuPlugin;
 
-// helper crate to use e-gui to tweak UI as we build it. Can be removed at the end.
-//use bevy_inspector_egui::quick::WorldInspectorPlugin;
-
 fn main() {
         App::new()                                          // Creates a new App with some default structure to enable core engine features
                 // set global state (e.g., Resources)
@@ -58,7 +55,6 @@ fn main() {
 
                 // Engine & Development Plugins
                 .add_plugins(DefaultPlugins)                // adds default bevy engine features (aka plugins)
-                //.add_plugins(WorldInspectorPlugin::new())   // adds inspector plugin to tweak UI as we build it. Can be removed at the end.
 
                 // App Plugins
                 .add_plugins(ToolbarMenuPlugin)             // adds custom toolbar plugin
