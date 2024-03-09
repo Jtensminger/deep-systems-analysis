@@ -39,16 +39,32 @@
         SelectToolBarItem: OnClick --> CursorMode changes to specific CursorMode::EntityType
         CursorMode::EntityType: OnClick --> Drops EntityType on Canvas
 */
+mod system_language;
 mod toolbar_menu;
+mod camera;
 
 // Bevy dependencies
-use bevy::prelude::*;
-//use bevy::input::mouse::MouseButton;
+use bevy::{
+        prelude::*,
+        math::bounding::*,
+        sprite::MaterialMesh2dBundle,
+        window::PrimaryWindow
+        //input::mouse::MouseButton,
+};
 
 // DSA dependencies
+use system_language::{
+        SystemLanguagePlugin,
+        CoordinatePosition
+};
 use toolbar_menu::ToolbarMenuPlugin;
+use camera::CameraPlugin;
+
+// Dev dependencies
+use std::env;
 
 fn main() {
+        //env::set_var("RUST_BACKTRACE", "1");
         App::new()                                          // Creates a new App with some default structure to enable core engine features
                 // set global state (e.g., Resources)
                 .insert_resource(ClearColor(Color::rgb(0.9, 0.3, 0.6))) // default background color
@@ -57,18 +73,55 @@ fn main() {
                 .add_plugins(DefaultPlugins)                // adds default bevy engine features (aka plugins)
 
                 // App Plugins
-                .add_plugins(ToolbarMenuPlugin)             // adds custom toolbar plugin
-                
+                .add_plugins(ToolbarMenuPlugin)            
+                .add_plugins(CameraPlugin)
+                .add_plugins(SystemLanguagePlugin)
+
                 // App Systems
-                .add_systems(Startup, setup)                // Change Window Background to White https://bevy-cheatbook.github.io/window/clear-color.html
-                //.add_systems(Update, grab_mouse)            // Toggles Cursor to Grab or Grabbing
+                //.add_systems(Startup, (spawn_system_of_interest, draw_system_of_interest).chain())                                         // Add a Circle to the Canvas
+                //.add_systems(Update, draw_gizmos_2d)                                                      
+                
+                //.add_systems(Update, grab_mouse)                                                      // Toggles Cursor to Grab or Grabbing
+
                 .run();                                     // Starts the application by calling the app’s runner function. Finalizes the App configuration.
 }
 
-// Use the ClearColor resource to choose the default background color. This color will be used as the default for all cameras, unless overriden.
-fn setup(mut commands: Commands) {
-        commands.spawn(Camera2dBundle::default());
+/*
+fn draw_gizmos_2d(
+        mut gizmos: Gizmos
+) {
+        let position: Vec2 = CoordinatePosition::center().to_vec2();
+        let color = Color::WHITE;
+        let angle = 90.;
+
+        let shape = Circle { 
+                radius: 100.
+        };
+
+        let bounding = BoundingCircle {
+                center: position,
+                circle: shape,
+        };
+        
+        let spatial_bundle = SpatialBundle {
+                transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
+                ..Default::default()
+        };
+
+        // draw a circle
+        gizmos.primitive_2d(shape, position, angle, color); 
+        
+        // draw a line
+        let segment = bevy::prelude::Segment2d::new(Direction2d::from_xy(1., 0.3).unwrap(), 90.);
+        gizmos.primitive_2d(segment, Vec2::new(0., 0.), 0., Color::WHITE);
 }
+*/
+
+
+
+
+
+
 
 // https://bevy-cheatbook.github.io/input/mouse.html
 /* 
@@ -76,7 +129,7 @@ fn grab_mouse(
         mut windows: Query<&mut Window>,
         mouse: Res<ButtonInput<MouseButton>>,
 ) {
-        let mut window = windows.single_mut(); // querering to retreive the mutuatable window entity
+        let mut window = windows.single_mut(); // queriering to retreive the mutuatable window entity
 
         /* change mouse icon to grab or grabbing*/
         /* event order goes Input::pressed -> Input::just_pressed -> Input::just_released */

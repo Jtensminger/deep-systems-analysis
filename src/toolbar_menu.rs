@@ -1,11 +1,7 @@
 use bevy::prelude::*;
-use egui::{vec2, Rect};
 use bevy_egui::{EguiContexts, EguiPlugin};
 // helper crate to use e-gui to tweak UI as we build it. Can be removed at the end.
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
-
-
-// use bevy::ui::*;
 
 pub struct ToolbarMenuPlugin;
 
