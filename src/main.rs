@@ -45,9 +45,9 @@ mod camera;
 
 // Bevy dependencies
 use bevy::{
-        prelude::*,
         math::bounding::*,
-        sprite::MaterialMesh2dBundle,
+        prelude::*,
+        sprite::{Material2dPlugin, MaterialMesh2dBundle},
         window::PrimaryWindow
         //input::mouse::MouseButton,
 };
@@ -55,7 +55,7 @@ use bevy::{
 // DSA dependencies
 use system_language::{
         SystemLanguagePlugin,
-        CoordinatePosition
+        CustomMaterial,
 };
 use toolbar_menu::ToolbarMenuPlugin;
 use camera::CameraPlugin;
@@ -71,7 +71,7 @@ fn main() {
 
                 // Engine & Development Plugins
                 .add_plugins(DefaultPlugins)                // adds default bevy engine features (aka plugins)
-
+                
                 // App Plugins
                 .add_plugins(ToolbarMenuPlugin)            
                 .add_plugins(CameraPlugin)

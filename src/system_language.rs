@@ -1,14 +1,37 @@
 use std::fmt;
-use bevy::{prelude::*, sprite::{MaterialMesh2dBundle, Mesh2dHandle}, window::PrimaryWindow};
+use bevy::{
+        asset::load_internal_asset, prelude::*,
+        render::render_resource::{AsBindGroup, ShaderRef},
+        sprite::{Material2d, Material2dPlugin, MaterialMesh2dBundle, Mesh2dHandle},
+        window::PrimaryWindow
+};
+
+pub const CUSTOM_MATERIAL_SHADER_HANDLE: Handle<Shader> = Handle::weak_from_u128(3253086872234592509);
 
 pub struct SystemLanguagePlugin;
 
 impl Plugin for SystemLanguagePlugin {
         fn build(&self,app: &mut App) {
-                app.init_resource::<SelectedConstruct>()
+                load_internal_asset!(
+                        app,
+                        CUSTOM_MATERIAL_SHADER_HANDLE,
+                        "shaders/custom_material.wgsl",
+                        Shader::from_wgsl
+                );            
+                app.add_plugins(Material2dPlugin::<CustomMaterial>::default())
+                        .init_resource::<SelectedConstruct>()
                         .init_resource::<ConstructRenderData>()
                         .add_systems(Startup, setup_construct)
                         .add_systems(PostUpdate, on_spawn_construct);
+
+                app.world.resource_mut::<Assets<CustomMaterial>>().insert(
+                        Handle::<CustomMaterial>::default(),
+                        CustomMaterial {
+                                color: Color::WHITE,
+                                ..Default::default()
+                        },
+                );
+                    
         }
 }
 
@@ -19,7 +42,7 @@ pub struct ConstructRenderData {
                 This is basically the place for a global lookup of what your card needs to look like based on what type of construct
         */
         system_of_interest_mesh: Mesh2dHandle,
-        system_of_interest_material: Handle<ColorMaterial>,
+        system_of_interest_material: Handle<CustomMaterial>,
         // component_mesh: Handle<Mesh>,
         // external_construct_mesh: Handle<Mesh>,
         // flow_mesh: Handle<Mesh>,
@@ -43,7 +66,7 @@ impl ConstructRenderData {
                         // ConstructSetType::Source | ConstructSetType::Sink => self.component_mesh.clone(),
                 }
         }
-        pub fn material_by_type(&self, construct_set_type: ConstructSetType) -> Handle<ColorMaterial> {
+        pub fn material_by_type(&self, construct_set_type: ConstructSetType) -> Handle<CustomMaterial> {
                 match construct_set_type {
                         _ | ConstructSetType::SystemOfInterest => self.system_of_interest_material.clone(),
                         // ConstructSetType::Component => self.component_base_material.clone(),
@@ -62,10 +85,13 @@ impl FromWorld for ConstructRenderData {
         fn from_world(world: &mut World) -> Self {
                 let world = world.cell();
                 let mut meshes = world.resource_mut::<Assets<Mesh>>();
-                let mut materials = world.resource_mut::<Assets<ColorMaterial>>();
+                let mut materials = world.resource_mut::<Assets<CustomMaterial>>();
                 Self {
                         system_of_interest_mesh: Mesh2dHandle(meshes.add(ConstructRenderData::placeholder_mesh())),
-                        system_of_interest_material: materials.add(Color::rgba(92., 92., 92., 70.)),
+                        system_of_interest_material: materials.add(CustomMaterial {
+                                color: Color::WHITE,
+                                ..Default::default()
+                        }),
                 }
     }
 }
@@ -151,7 +177,7 @@ impl fmt::Display for ConstructSetType {
 #[derive(Bundle)]
 pub struct ConstructBundle {
         pub construct: Construct,
-        pub material_mesh_2d_bundle: MaterialMesh2dBundle<ColorMaterial>,
+        pub material_mesh_2d_bundle: MaterialMesh2dBundle<CustomMaterial>,
         /*  Rapier Physics Fields */
         // pub collider: Collider,
         // pub sensor: Sensor,
@@ -310,6 +336,39 @@ fn on_spawn_construct(
         // }
 }
 
+// This struct defines the data that will be passed to your shader
+#[derive(AsBindGroup, TypePath, Debug, Clone, Asset)]
+pub struct CustomMaterial {
+        // Uniform bindings must implement `ShaderType`, which will be used to convert the value to
+        // its shader-compatible equivalent. Most core math types already implement `ShaderType`.
+        #[uniform(0)]
+        color: Color,
+        // Images can be bound as textures in shaders. If the Image's sampler is also needed, just
+        // add the sampler attribute with a different binding index.
+        #[texture(1)]
+        #[sampler(2)]
+        texture: Option<Handle<Image>>,
+}
+impl Default for CustomMaterial {
+        fn default() -> Self {
+                CustomMaterial {
+                        color: Color::WHITE,
+                        texture: None,
+                }
+        }
+}
+    
+/// The Material trait is very configurable, but comes with sensible defaults for all methods.
+/// You only need to implement functions for features that need non-default behavior. See the Material api docs for details!
+impl Material2d for CustomMaterial {
+        fn fragment_shader() -> ShaderRef {
+                CUSTOM_MATERIAL_SHADER_HANDLE.into()
+        }
+}
+
+
+
+
 /* 
 Mesh -> textured -> rendered
 Problem:
@@ -328,140 +387,8 @@ Proposed solution:
         Child entities could be:
         - Construct Interior Circle
         - Construct Boundary Ring
-
 Border/Color Issues:
         Option 1: 2x Meshes, 2x different Color Materials
         Option 2: 1x Mesh, Custom Shader to draw stroke.
-*/
-
-/*
-#[derive(Component)]
-enum SLConstruct {
-        System,
-        Component,
-        Boundary,
-        Interface,
-        Source,
-        Sink,
-        Flow
-}
-
-#[derive(Component, Clone)]
-struct SLConstructName(String);
-
-#[derive(Component)]
-struct SystemOfInterest;
-
-#[derive(Component)]
-struct SLHierarchyLevel(i32);
-
-#[derive(Component)]
-struct Position {
-        x: f32,
-        y: f32,
-        z: f32,
-}
-
-impl Position {
-        pub fn new(x: f32, y: f32, z: f32) -> Self {
-                Position { x, y, z }
-        }
-
-        pub fn center() -> Self {
-                Position { x: 0., y: 0., z: 0. }
-        }
-
-        pub fn x(mut self, x: f32) -> Self {
-                self.x = x;
-                self
-        }
-
-        pub fn y(mut self, y: f32) -> Self {
-                self.y = y;
-                self
-        }
-
-        pub fn z(mut self, z: f32) -> Self {
-                self.z = z;
-                self
-        }
-
-        pub fn to_vec3(&self) -> Vec3 {
-                Vec3::new(self.x, self.y, self.z)
-        }
-
-        pub fn to_vec2(&self) -> Vec2 {
-                Vec2::new(self.x, self.y)
-        }
-}
-
-// TODO: Update based on new data structures
-fn spawn_system_of_interest(
-        mut commands: Commands,
-) {
-        commands.spawn((
-                SystemOfInterest,
-                SLConstruct::System,
-                SLHierarchyLevel(0),
-                SLConstructName("System of Interest".to_string())
-        ));
-}
-
-fn draw_system_of_interest(
-        mut commands: Commands,
-        mut materials: ResMut<Assets<ColorMaterial>>,
-        mut meshes: ResMut<Assets<Mesh>>,
-        system_of_interest_query: Query<&SLConstructName, With<SystemOfInterest>>,
-        window_query: Query<&Window, With<PrimaryWindow>>
-) {
-        let SLConstructName(soi_name) = system_of_interest_query.single();
-        
-        // get window size and determine the maximum radius of our SOI circle
-        let primary_window = window_query.single();
-        let (logical_width, logical_height) = (primary_window.resolution.width(), primary_window.resolution.height());
-        let padding_percentage = 0.2;
-        let available_logical_height = logical_height - (logical_height * padding_percentage);
-        let available_logical_width = logical_width - (logical_width * padding_percentage);
-        let max_radius = f32::min(available_logical_height, available_logical_width) / 2.;
-
-        // create the SOI entity && draw it's position on the canvas
-        let mesh: Mesh = Circle::new(max_radius)
-                .mesh()
-                .resolution(64)
-                .build();
-
-        let material: ColorMaterial = Color::rgba(92., 92., 92., 70.).into();
-        let position = Position::center().to_vec3();
-        let material_mesh_2d_bundle = MaterialMesh2dBundle {
-                mesh:  meshes.add(mesh).into(),
-                material: materials.add(material),
-                transform: Transform::from_translation(position),
-                ..default()
-        };
-
-        commands.spawn((
-                SystemOfInterest,
-                material_mesh_2d_bundle,
-        ));
-
-        let text = Text::from_section(
-                // Accepts a String or any type that converts into a String, such as &str.
-                soi_name,
-                TextStyle {
-                    font_size: 60.0,
-                    color: Color::BLACK,
-                    ..default()
-                },
-        );
-        
-        let text_2d_bundle = Text2dBundle {
-                text,
-                ..default()
-        };
-
-        commands.spawn((
-                SystemOfInterest,
-                text_2d_bundle
-        ));
-}
+In all scenarios, we need to ability to change the interior color and shape outline color, so a fragment shader is needed to generate outlines.
 */
