@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, render::deterministic::DeterministicRenderingConfig};
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
@@ -12,13 +12,11 @@ impl Plugin for CameraPlugin {
 pub struct MainCamera;
 
 fn setup_cameras(
-        mut commands: Commands
+        mut commands: Commands,
+        mut deterministic_rendering_config: ResMut<DeterministicRenderingConfig>,
 ) {
-        commands
-                .spawn((
-                        Camera2dBundle::default(),
-                        MainCamera,
-                ));
+        deterministic_rendering_config.stable_sort_z_fighting = true;
+        commands.spawn((Camera2dBundle::default(), MainCamera));
 }
 
 fn zoom_control_system(
