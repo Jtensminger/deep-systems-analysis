@@ -15,14 +15,20 @@ pub struct Environment;
 #[derive(Component)]
 pub struct SOI;
 
+#[derive(Component)]
+pub struct OutflowRequirements {
+        pub product_material_outflow: u32,
+        pub product_energy_outflow: u32,
+        pub product_message_outflow: u32,
+        pub waste_material_outflow: u32,
+        pub waste_energy_outflow: u32
+}
 
 #[derive(Component)]
 pub struct System;
 
-
 #[derive(Component)]
 pub struct Boundary;
-
 
 #[derive(Component)]
 pub struct SOIRenderData;
@@ -49,7 +55,15 @@ pub fn spawn_soi(
         let soi = commands.spawn_empty().id();
         commands.entity(soi)
                 .insert(SOI)
-                .insert(System);
+                .insert(System)
+                .insert(OutflowRequirements {
+                        product_material_outflow: 1,
+                        product_energy_outflow: 1,
+                        product_message_outflow: 1,
+                        waste_material_outflow: 0,
+                        waste_energy_outflow: 0
+                });
+        
         events.send(construct_spawned::SOI { entity: soi });
 }
 

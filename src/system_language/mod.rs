@@ -1,11 +1,17 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::plugin::ShapePlugin;
 
-mod constructs;
-use constructs::*;
-
 mod levels;
 use levels::*;
+
+mod flows;
+use flows::*;
+
+mod properties;
+use properties::*;
+
+mod selector;
+use selector::*;
 
 mod system;
 use system::*;
@@ -28,6 +34,7 @@ impl Plugin for SystemLanguagePlugin {
                         .add_systems(Startup, spawn_soi)
                         .add_systems(Update, (
                                 handle_soi_spawn,
+                                outflow_product_energy_existence_dispatch,
                                 draw_soi
                         ).chain());
         }
